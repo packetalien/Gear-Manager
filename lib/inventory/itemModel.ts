@@ -2,12 +2,12 @@
  * Inventory Item Model Utilities
  */
 
-import type { Item, ItemDefinition } from "@/types";
+import type { GURPSItem, GURPSItemDefinition } from "@/types/gurps";
 
 /**
  * Calculate total weight of an item (including contained items)
  */
-export function getItemTotalWeight(item: Item): number {
+export function getItemTotalWeight(item: GURPSItem): number {
   if (!item.itemDefinition) {
     return 0;
   }
@@ -29,8 +29,8 @@ export function getItemTotalWeight(item: Item): number {
  * Check if an item can fit in a container
  */
 export function canFitInContainer(
-  item: Item,
-  container: ItemDefinition
+  item: GURPSItem,
+  container: GURPSItemDefinition
 ): boolean {
   if (!container.isContainer || !container.containerWidth || !container.containerHeight) {
     return false;
@@ -58,7 +58,7 @@ export function canFitInContainer(
  * Check if container has weight capacity
  */
 export function containerHasCapacity(
-  container: ItemDefinition,
+  container: GURPSItemDefinition,
   currentWeight: number,
   itemWeight: number
 ): boolean {

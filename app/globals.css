@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -22,38 +22,30 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --tactical-accent: 158 100% 50%; /* Neon green #00ff9f */
+    --tactical-bg: 210 100% 5%; /* Very dark #0a0f14 */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 210 100% 5%; /* #0a0f14 */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 210 100% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 210 100% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary: 158 100% 50%; /* Neon green */
+    --primary-foreground: 210 100% 5%;
+    --secondary: 217.2 32.6% 12%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217.2 32.6% 12%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 158 100% 50%;
+    --accent-foreground: 210 100% 5%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 217.2 32.6% 20%;
+    --input: 217.2 32.6% 20%;
+    --ring: 158 100% 50%;
   }
 }
 
@@ -62,27 +54,100 @@
     border-color: hsl(var(--border));
   }
   body {
-    background-color: hsl(var(--background));
+    background-color: hsl(var(--tactical-bg));
     color: hsl(var(--foreground));
+    overflow: hidden;
   }
 }
 
-/* Tactical HUD Theme - Liquid Glass Effect */
+/* Tactical HUD - Premium Video Game Style */
 .tactical-hud {
-  background-color: rgba(17, 24, 39, 0.8);
-  backdrop-filter: blur(12px);
-  background: linear-gradient(
-    135deg,
-    rgba(17, 24, 39, 0.9) 0%,
-    rgba(31, 41, 55, 0.85) 100%
-  );
+  background-color: hsl(var(--tactical-bg));
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 159, 0.02) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 255, 159, 0.02) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 255, 159, 0.02) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 255, 159, 0.02) 3px
+    );
+  min-height: 100vh;
+  position: relative;
 }
 
-.tactical-card {
-  background-color: rgba(31, 41, 55, 0.6);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(55, 65, 81, 0.5);
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -1px rgba(0, 0, 0, 0.2);
+/* Glass Morphism Components */
+.glass-panel {
+  background: rgba(10, 15, 20, 0.7);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 255, 159, 0.2);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 0 20px rgba(0, 255, 159, 0.05);
+}
+
+.glass-panel-glow {
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    0 0 20px rgba(0, 255, 159, 0.1),
+    inset 0 0 20px rgba(0, 255, 159, 0.05);
+}
+
+/* Encumbrance Meter Colors */
+.enc-none { background: linear-gradient(90deg, #10b981 0%, #34d399 100%); }
+.enc-light { background: linear-gradient(90deg, #84cc16 0%, #a3e635 100%); }
+.enc-medium { background: linear-gradient(90deg, #eab308 0%, #facc15 100%); }
+.enc-heavy { background: linear-gradient(90deg, #f97316 0%, #fb923c 100%); }
+.enc-xheavy { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
+
+/* Neon Green Accent */
+.neon-accent {
+  color: #00ff9f;
+  text-shadow: 0 0 10px rgba(0, 255, 159, 0.5), 0 0 20px rgba(0, 255, 159, 0.3);
+}
+
+.neon-border {
+  border-color: rgba(0, 255, 159, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 159, 0.2);
+}
+
+/* Hit Location Glow */
+.hit-location-active {
+  fill: rgba(0, 255, 159, 0.3);
+  stroke: #00ff9f;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 159, 0.6));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hit-location-active:hover {
+  fill: rgba(0, 255, 159, 0.5);
+  filter: drop-shadow(0 0 12px rgba(0, 255, 159, 0.8));
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 20, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 159, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 159, 0.5);
 }

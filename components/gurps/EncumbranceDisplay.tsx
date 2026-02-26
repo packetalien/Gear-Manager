@@ -4,12 +4,12 @@
  * EncumbranceDisplay - Shows GURPS encumbrance level and modifiers
  */
 
-import { encumbranceLevel, basicLift, calculateTotalWeight } from "@/lib/gurps";
-import type { Character, Item } from "@/types";
+import { encumbranceLevel, basicLift, calculateTotalWeight } from "@/lib/gurps/encumbrance";
+import type { GURPSCharacter, GURPSItem } from "@/types/gurps";
 
 interface EncumbranceDisplayProps {
-  character: Character;
-  items: Item[];
+  character: GURPSCharacter;
+  items: GURPSItem[];
 }
 
 export function EncumbranceDisplay({ character, items }: EncumbranceDisplayProps) {

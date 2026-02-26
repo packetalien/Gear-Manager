@@ -2,7 +2,7 @@
  * GURPS Item Type Definitions and Utilities
  */
 
-import type { ItemDefinition, HitLocation } from "@/types";
+import type { GURPSItemDefinition, HitLocation } from "@/types/gurps";
 
 /**
  * Common GURPS item categories
@@ -32,7 +32,7 @@ export const QualityLevels = {
 /**
  * Sample item definitions for testing
  */
-export const SampleItems: ItemDefinition[] = [
+export const SampleItems: GURPSItemDefinition[] = [
   {
     id: "tactical-vest",
     name: "Tactical Vest",
@@ -118,6 +118,6 @@ export const SampleItems: ItemDefinition[] = [
 /**
  * Get item by ID from sample items
  */
-export function getSampleItem(id: string): ItemDefinition | undefined {
+export function getSampleItem(id: string): GURPSItemDefinition | undefined {
   return SampleItems.find((item) => item.id === id);
 }

@@ -3,7 +3,7 @@
  * Handles collision detection, rotation, and placement logic for volumetric grid inventory
  */
 
-import type { Item, GridPosition, CollisionResult } from "@/types";
+import type { GURPSItem, GridPosition, CollisionResult } from "@/types/gurps";
 
 /**
  * Get rotated dimensions of an item
@@ -64,8 +64,8 @@ export function isWithinBounds(
  * Check for collisions between items in a grid
  */
 export function checkCollision(
-  items: Item[],
-  newItem: Item,
+  items: GURPSItem[],
+  newItem: GURPSItem,
   gridX: number,
   gridY: number,
   rotation: number,
@@ -140,8 +140,8 @@ export function checkCollision(
  * Check if an item can be placed at a position
  */
 export function canPlace(
-  items: Item[],
-  item: Item,
+  items: GURPSItem[],
+  item: GURPSItem,
   gridX: number,
   gridY: number,
   rotation: number,
