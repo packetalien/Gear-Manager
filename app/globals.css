@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -61,16 +59,18 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
 /* Tactical HUD Theme - Liquid Glass Effect */
 .tactical-hud {
-  @apply bg-gray-900/80 backdrop-blur-md;
+  background-color: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(12px);
   background: linear-gradient(
     135deg,
     rgba(17, 24, 39, 0.9) 0%,
@@ -79,7 +79,10 @@
 }
 
 .tactical-card {
-  @apply bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg;
+  background-color: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  border-radius: 0.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
     0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }

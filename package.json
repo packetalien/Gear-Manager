@@ -13,7 +13,13 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio"
   },
-  "keywords": ["gurps", "ttrpg", "inventory", "tactical", "gear-manager"],
+  "keywords": [
+    "gurps",
+    "ttrpg",
+    "inventory",
+    "tactical",
+    "gear-manager"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module",
@@ -51,6 +57,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^25.3.1"
   }
 }

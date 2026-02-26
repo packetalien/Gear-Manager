@@ -7,7 +7,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
-import { Stage, Container, Sprite, Graphics, Text } from "@pixi/react";
 import type { Item, InventorySlot } from "@/types";
 import { checkCollision, getRotatedDimensions, snapToGrid } from "@/lib/inventory/gridEngine";
 
@@ -51,16 +50,22 @@ export function GridContainer({
     onItemRotate?.(item.id, newRotation);
   };
 
+  const CONTAINER_OFFSET = 10; // Container is offset by 10px
+
   const handleMouseDown = (item: Item, event: PIXI.FederatedPointerEvent) => {
     if (!item.gridX || !item.gridY || !item.itemDefinition) return;
+    
+    // Convert global coordinates to container-local coordinates
+    const containerX = event.global.x - CONTAINER_OFFSET;
+    const containerY = event.global.y - CONTAINER_OFFSET;
     
     const itemWorldX = item.gridX * cellSize;
     const itemWorldY = item.gridY * cellSize;
     
     setDraggingItem({
       item,
-      offsetX: event.global.x - itemWorldX,
-      offsetY: event.global.y - itemWorldY,
+      offsetX: containerX - itemWorldX,
+      offsetY: containerY - itemWorldY,
     });
     setSelectedItemId(item.id);
   };
@@ -71,13 +76,22 @@ export function GridContainer({
       return;
     }
 
-    const snapped = snapToGrid(
-      event.global.x - draggingItem.offsetX,
-      event.global.y - draggingItem.offsetY,
-      cellSize
-    );
+    // Convert global coordinates to container-local coordinates
+    const containerX = event.global.x - CONTAINER_OFFSET;
+    const containerY = event.global.y - CONTAINER_OFFSET;
 
-    setHoverPosition({ x: snapped.x * cellSize, y: snapped.y * cellSize });
+    // Calculate item position accounting for offset
+    const itemX = containerX - draggingItem.offsetX;
+    const itemY = containerY - draggingItem.offsetY;
+
+    // Snap to grid
+    const snapped = snapToGrid(itemX, itemY, cellSize);
+
+    // Convert back to global coordinates for display
+    setHoverPosition({ 
+      x: snapped.x * cellSize + CONTAINER_OFFSET, 
+      y: snapped.y * cellSize + CONTAINER_OFFSET 
+    });
   };
 
   const handleMouseUp = () => {
@@ -86,7 +100,13 @@ export function GridContainer({
       return;
     }
 
-    const snapped = snapToGrid(hoverPosition.x, hoverPosition.y, cellSize);
+    // Convert hover position back to container-local coordinates
+    const containerX = hoverPosition.x - CONTAINER_OFFSET;
+    const containerY = hoverPosition.y - CONTAINER_OFFSET;
+
+    // Snap to grid (already in pixel coordinates, need to convert to grid)
+    const snapped = snapToGrid(containerX, containerY, cellSize);
+    
     const result = checkCollision(
       items.filter((i) => i.id !== draggingItem.item.id),
       draggingItem.item,
@@ -106,176 +126,222 @@ export function GridContainer({
     setHoverPosition(null);
   };
 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const appRef = useRef<PIXI.Application | null>(null);
+  const containerRef = useRef<PIXI.Container | null>(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    // Create PixiJS application
+    const app = new PIXI.Application();
+    app.init({
+      canvas: canvasRef.current,
+      width: gridWidth + 20,
+      height: gridHeight + 20,
+      backgroundColor: 0x1a1a1a,
+      antialias: true,
+    });
+
+    appRef.current = app;
+
+    // Create main container
+    const container = new PIXI.Container();
+    container.x = 10;
+    container.y = 10;
+    app.stage.addChild(container);
+    containerRef.current = container;
+
+    // Cleanup
+    return () => {
+      app.destroy(true);
+    };
+  }, [gridWidth, gridHeight]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    updatePixiContainer(
+      containerRef.current,
+      slot,
+      items,
+      cellSize,
+      selectedItemId,
+      draggingItem,
+      hoverPosition,
+      handleItemClick,
+      handleItemDoubleClick,
+      handleMouseDown
+    );
+  }, [
+    slot,
+    items,
+    cellSize,
+    selectedItemId,
+    draggingItem,
+    hoverPosition,
+    handleItemClick,
+    handleItemDoubleClick,
+    handleMouseDown,
+  ]);
+
   return (
     <div className="border border-gray-700 rounded-lg p-4 bg-gray-900/50 backdrop-blur-sm">
       <h3 className="text-sm font-semibold text-gray-300 mb-2">{slot.name}</h3>
       <div
         onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
+          if (!appRef.current || !canvasRef.current) return;
+          const rect = canvasRef.current.getBoundingClientRect();
+          const globalX = e.clientX - rect.left;
+          const globalY = e.clientY - rect.top;
           handleMouseMove({
-            global: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+            global: { x: globalX, y: globalY },
           } as PIXI.FederatedPointerEvent);
         }}
         onMouseUp={handleMouseUp}
       >
-        <Stage
-          width={gridWidth + 20}
-          height={gridHeight + 20}
-          options={{ backgroundColor: 0x1a1a1a, antialias: true }}
-        >
-        <Container x={10} y={10}>
-          {/* Grid Background */}
-          <GridBackground
-            width={slot.gridWidth}
-            height={slot.gridHeight}
-            cellSize={cellSize}
-          />
-
-          {/* Items */}
-          {items.map((item) => {
-            if (draggingItem?.item.id === item.id) return null;
-            
-            return (
-              <ItemSprite
-                key={item.id}
-                item={item}
-                cellSize={cellSize}
-                isSelected={selectedItemId === item.id}
-                onClick={handleItemClick}
-                onDoubleClick={handleItemDoubleClick}
-                onMouseDown={handleMouseDown}
-              />
-            );
-          })}
-
-          {/* Dragging Item Preview */}
-          {draggingItem && hoverPosition && (
-            <ItemSprite
-              item={draggingItem.item}
-              cellSize={cellSize}
-              x={hoverPosition.x}
-              y={hoverPosition.y}
-              isDragging={true}
-              opacity={0.7}
-            />
-          )}
-        </Container>
-      </Stage>
+        <canvas ref={canvasRef} />
       </div>
     </div>
   );
 }
 
-// Grid Background Component
-function GridBackground({
-  width,
-  height,
-  cellSize,
-}: {
-  width: number;
-  height: number;
-  cellSize: number;
-}) {
-  return (
-    <Graphics
-      draw={(g) => {
-        g.clear();
-        
-        // Grid cells
-        g.lineStyle(1, 0x333333, 0.5);
-        for (let x = 0; x <= width; x++) {
-          g.moveTo(x * cellSize, 0);
-          g.lineTo(x * cellSize, height * cellSize);
-        }
-        for (let y = 0; y <= height; y++) {
-          g.moveTo(0, y * cellSize);
-          g.lineTo(width * cellSize, y * cellSize);
-        }
-        
-        // Background
-        g.beginFill(0x0a0a0a, 0.8);
-        g.drawRect(0, 0, width * cellSize, height * cellSize);
-        g.endFill();
-      }}
-    />
-  );
-}
+// Update PixiJS container with grid and items
+function updatePixiContainer(
+  container: PIXI.Container,
+  slot: InventorySlot,
+  items: Item[],
+  cellSize: number,
+  selectedItemId: string | null,
+  draggingItem: { item: Item; offsetX: number; offsetY: number } | null,
+  hoverPosition: { x: number; y: number } | null,
+  onItemClick: (item: Item) => void,
+  onItemDoubleClick: (item: Item) => void,
+  onItemMouseDown: (item: Item, event: PIXI.FederatedPointerEvent) => void
+) {
+  // Clear existing children
+  container.removeChildren();
 
-// Item Sprite Component
-function ItemSprite({
-  item,
-  cellSize,
-  x,
-  y,
-  isSelected = false,
-  isDragging = false,
-  opacity = 1,
-  onClick,
-  onDoubleClick,
-  onMouseDown,
-}: {
-  item: Item;
-  cellSize: number;
-  x?: number;
-  y?: number;
-  isSelected?: boolean;
-  isDragging?: boolean;
-  opacity?: number;
-  onClick?: (item: Item) => void;
-  onDoubleClick?: (item: Item) => void;
-  onMouseDown?: (item: Item, event: PIXI.FederatedPointerEvent) => void;
-}) {
-  if (!item.itemDefinition) return null;
+  // Create grid background
+  const gridBg = new PIXI.Graphics();
+  
+  // Draw grid lines
+  gridBg.setStrokeStyle({ width: 1, color: 0x333333, alpha: 0.5 });
+  for (let x = 0; x <= slot.gridWidth; x++) {
+    gridBg.moveTo(x * cellSize, 0);
+    gridBg.lineTo(x * cellSize, slot.gridHeight * cellSize);
+  }
+  for (let y = 0; y <= slot.gridHeight; y++) {
+    gridBg.moveTo(0, y * cellSize);
+    gridBg.lineTo(slot.gridWidth * cellSize, y * cellSize);
+  }
+  
+  // Draw background
+  gridBg.rect(0, 0, slot.gridWidth * cellSize, slot.gridHeight * cellSize);
+  gridBg.fill({ color: 0x0a0a0a, alpha: 0.8 });
+  
+  container.addChild(gridBg);
 
-  const { width, height } = getRotatedDimensions(
-    item.itemDefinition.gridWidth,
-    item.itemDefinition.gridHeight,
-    item.rotation
-  );
+  // Create item sprites
+  items.forEach((item) => {
+    if (draggingItem?.item.id === item.id) return;
+    if (!item.itemDefinition) return;
 
-  const displayX = x ?? (item.gridX ?? 0) * cellSize;
-  const displayY = y ?? (item.gridY ?? 0) * cellSize;
+    const { width, height } = getRotatedDimensions(
+      item.itemDefinition.gridWidth,
+      item.itemDefinition.gridHeight,
+      item.rotation
+    );
 
-  const itemWidth = width * cellSize;
-  const itemHeight = height * cellSize;
+    const displayX = (item.gridX ?? 0) * cellSize;
+    const displayY = (item.gridY ?? 0) * cellSize;
+    const itemWidth = width * cellSize;
+    const itemHeight = height * cellSize;
+    const isSelected = selectedItemId === item.id;
 
-  return (
-    <Container
-      x={displayX}
-      y={displayY}
-      interactive={!isDragging}
-      buttonMode={!isDragging}
-      pointerdown={(e) => onMouseDown?.(item, e)}
-      click={() => onClick?.(item)}
-      doubleclick={() => onDoubleClick?.(item)}
-    >
-      {/* Item Background */}
-      <Graphics
-        draw={(g) => {
-          g.clear();
-          g.beginFill(
-            isSelected ? 0x4a9eff : isDragging ? 0x6b7280 : 0x374151,
-            opacity
-          );
-          g.lineStyle(2, isSelected ? 0x60a5fa : 0x4b5563, opacity);
-          g.drawRoundedRect(0, 0, itemWidth, itemHeight, 4);
-          g.endFill();
-        }}
-      />
+    // Item container
+    const itemContainer = new PIXI.Container();
+    itemContainer.x = displayX;
+    itemContainer.y = displayY;
+    itemContainer.interactive = true;
+    itemContainer.cursor = "pointer";
 
-      {/* Item Label */}
-      <Text
-        text={item.itemDefinition.name}
-        style={{
-          fontSize: 10,
-          fill: 0xffffff,
-          wordWrap: true,
-          wordWrapWidth: itemWidth - 8,
-        }}
-        x={4}
-        y={4}
-        alpha={opacity}
-      />
-    </Container>
-  );
+    // Item background
+    const itemBg = new PIXI.Graphics();
+    itemBg.setStrokeStyle({ 
+      width: 2, 
+      color: isSelected ? 0x60a5fa : 0x4b5563, 
+      alpha: 1 
+    });
+    itemBg.roundRect(0, 0, itemWidth, itemHeight, 4);
+    itemBg.fill({ color: isSelected ? 0x4a9eff : 0x374151, alpha: 1 });
+    itemContainer.addChild(itemBg);
+
+    // Item text
+    const itemText = new PIXI.Text({
+      text: item.itemDefinition.name,
+      style: {
+        fontSize: 10,
+        fill: 0xffffff,
+        wordWrap: true,
+        wordWrapWidth: itemWidth - 8,
+      },
+    });
+    itemText.x = 4;
+    itemText.y = 4;
+    itemContainer.addChild(itemText);
+
+    // Event handlers
+    itemContainer.on("pointerdown", (e: PIXI.FederatedPointerEvent) => {
+      onItemMouseDown(item, e);
+    });
+    itemContainer.on("click", () => {
+      onItemClick(item);
+    });
+    itemContainer.on("dblclick", () => {
+      onItemDoubleClick(item);
+    });
+
+    container.addChild(itemContainer);
+  });
+
+  // Dragging item preview
+  if (draggingItem && hoverPosition && draggingItem.item.itemDefinition) {
+    const { width, height } = getRotatedDimensions(
+      draggingItem.item.itemDefinition.gridWidth,
+      draggingItem.item.itemDefinition.gridHeight,
+      draggingItem.item.rotation
+    );
+
+    const itemWidth = width * cellSize;
+    const itemHeight = height * cellSize;
+
+    const dragContainer = new PIXI.Container();
+    // Convert hover position (global) to container-local coordinates
+    const CONTAINER_OFFSET = 10;
+    dragContainer.x = hoverPosition.x - CONTAINER_OFFSET;
+    dragContainer.y = hoverPosition.y - CONTAINER_OFFSET;
+    dragContainer.alpha = 0.7;
+
+    const dragBg = new PIXI.Graphics();
+    dragBg.setStrokeStyle({ width: 2, color: 0x4b5563, alpha: 1 });
+    dragBg.roundRect(0, 0, itemWidth, itemHeight, 4);
+    dragBg.fill({ color: 0x6b7280, alpha: 1 });
+    dragContainer.addChild(dragBg);
+
+    const dragText = new PIXI.Text({
+      text: draggingItem.item.itemDefinition.name,
+      style: {
+        fontSize: 10,
+        fill: 0xffffff,
+        wordWrap: true,
+        wordWrapWidth: itemWidth - 8,
+      },
+    });
+    dragText.x = 4;
+    dragText.y = 4;
+    dragContainer.addChild(dragText);
+
+    container.addChild(dragContainer);
+  }
 }
