@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// GURPS Character
+model Character {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  strength    Int      @default(10) // ST
+  dexterity   Int      @default(10) // DX
+  intelligence Int     @default(10) // IQ
+  health      Int      @default(10) // HT
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  inventorySlots InventorySlot[]
+  equippedItems  EquippedItem[]
+
+  @@index([userId])
+}
+
+// GURPS Item Definition (catalog)
+model ItemDefinition {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  weight      Float    // lbs
+  cost        Float?   // $ in GURPS currency
+  tl          Int?     // Tech Level
+  lc          Int?     // Legality Class
+  quality     String?  // e.g., "Fine", "Cheap", "Good"
+  category    String   // e.g., "Weapon", "Armor", "Tool", "Container"
+  
+  // Grid dimensions (for volumetric inventory)
+  gridWidth   Int      @default(1)
+  gridHeight  Int      @default(1)
+  
+  // Container properties (if this item can hold other items)
+  isContainer Boolean  @default(false)
+  containerWidth  Int?
+  containerHeight Int?
+  containerMaxWeight Float?
+  
+  // Armor properties (if this is armor)
+  isArmor     Boolean  @default(false)
+  dr          Int?     // Damage Resistance
+  locations   String?  // JSON array of hit locations: ["torso", "arms"]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  items       Item[]
+
+  @@index([category])
+}
+
+// Item Instance (actual item in inventory)
+model Item {
+  id              String   @id @default(cuid())
+  itemDefinitionId String
+  characterId     String?
+  containerId     String?  // If inside another item
+  quantity        Int      @default(1)
+  
+  // Grid position (if in inventory grid)
+  gridX           Int?
+  gridY           Int?
+  rotation        Int      @default(0) // 0, 90, 180, 270
+  
+  // Custom properties
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  itemDefinition  ItemDefinition @relation(fields: [itemDefinitionId], references: [id])
+  container       Item?          @relation("ItemContainer", fields: [containerId], references: [id])
+  containedItems  Item[]         @relation("ItemContainer")
+  equippedItem    EquippedItem?
+
+  @@index([characterId])
+  @@index([containerId])
+}
+
+// Inventory Slot (grid container like tactical vest)
+model InventorySlot {
+  id          String   @id @default(cuid())
+  characterId String
+  name        String   // e.g., "Tactical Vest", "Backpack"
+  gridWidth   Int      // e.g., 8
+  gridHeight  Int      // e.g., 6
+  slotType    String   @default("container") // "container", "vest", "backpack", etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  character   Character @relation(fields: [characterId], references: [id])
+  items       Item[]
+
+  @@index([characterId])
+}
+
+// Equipped Items (items worn/held by character)
+model EquippedItem {
+  id          String   @id @default(cuid())
+  characterId String
+  itemId      String   @unique
+  location    String   // e.g., "torso", "hands", "head", "legs"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  character   Character @relation(fields: [characterId], references: [id])
+  item        Item      @relation(fields: [itemId], references: [id])
+
+  @@index([characterId])
+}
