@@ -72,12 +72,15 @@ export function TacticalHUD() {
           </div>
           
           {/* Encumbrance Bar */}
-          <div className="relative h-6 bg-gray-900/50 rounded-sm overflow-hidden border border-gray-700/50">
+          <div 
+            className="relative h-6 bg-gray-900/50 rounded-sm overflow-hidden border border-gray-700/50 group"
+            title={`${encumbrance.level}: Move ${encumbrance.moveModifier >= 0 ? '+' : ''}${encumbrance.moveModifier}, Dodge ${encumbrance.dodgeModifier >= 0 ? '+' : ''}${encumbrance.dodgeModifier}`}
+          >
             {/* Segments */}
             {segments.map((seg, idx) => (
               <div
                 key={seg.level}
-                className="absolute h-full"
+                className="absolute h-full transition-opacity duration-300"
                 style={{
                   left: `${seg.start}%`,
                   width: `${seg.end - seg.start}%`,
@@ -87,16 +90,16 @@ export function TacticalHUD() {
               />
             ))}
             
-            {/* Current position indicator */}
+            {/* Current position indicator with smooth transition */}
             <div
-              className="absolute top-0 bottom-0 w-0.5 bg-white"
-              style={{ left: `${encPercentage}%` }}
+              className="absolute top-0 bottom-0 w-0.5 bg-white transition-all duration-300 shadow-[0_0_4px_rgba(255,255,255,0.8)]"
+              style={{ left: `${encPercentage}%`, transition: "left 0.3s ease-out" }}
             />
             
             {/* Level label */}
             <div className="absolute inset-0 flex items-center justify-center">
               <span
-                className={`text-xs font-bold uppercase tracking-wider ${
+                className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
                   encumbrance.level !== "None" && encumbrance.level !== "Light"
                     ? "text-red-400"
                     : "text-white"

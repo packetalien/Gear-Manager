@@ -108,10 +108,12 @@ export function PixiGridContainer({ container, cellSize = 40 }: PixiGridContaine
             currentApp.canvas.parentNode.removeChild(currentApp.canvas);
           }
           
-          // Then destroy the app (async, but we don't wait)
-          currentApp.destroy().catch(() => {
+          // Then destroy the app
+          try {
+            currentApp.destroy();
+          } catch {
             // Ignore destroy errors during cleanup
-          });
+          }
         } catch (error) {
           // Fallback: just remove canvas
           if (currentApp.canvas && currentApp.canvas.parentNode) {
@@ -171,6 +173,30 @@ export function PixiGridContainer({ container, cellSize = 40 }: PixiGridContaine
       itemContainer.interactive = true;
       itemContainer.cursor = "pointer";
 
+      // Get item icon based on category
+      const getItemIcon = (category?: string): string => {
+        switch (category) {
+          case "Weapon":
+            return "🔫";
+          case "Armor":
+            return "🛡️";
+          case "Medical":
+            return "💉";
+          case "Ammunition":
+            return "📦";
+          case "Tool":
+            return "🔧";
+          case "Container":
+            return "🎒";
+          case "Electronics":
+            return "📱";
+          case "Food":
+            return "🍖";
+          default:
+            return "📦";
+        }
+      };
+
       // Item background with glow effect if selected
       const itemBg = new PIXI.Graphics();
       const fillColor = isSelected ? 0x00ff9f : 0x1f2937;
@@ -185,11 +211,25 @@ export function PixiGridContainer({ container, cellSize = 40 }: PixiGridContaine
       itemBg.fill({ color: fillColor, alpha: isSelected ? 0.4 : 0.3 });
       itemContainer.addChild(itemBg);
 
-      // Item text
-      const itemText = new PIXI.Text({
-        text: item.itemDefinition.name,
+      // Item icon (emoji as text)
+      const iconText = new PIXI.Text({
+        text: getItemIcon(item.itemDefinition.category),
         style: {
-          fontSize: 11,
+          fontSize: Math.min(itemWidth, itemHeight) * 0.4,
+          fill: isSelected ? 0x00ff9f : 0xffffff,
+        },
+      });
+      iconText.x = (itemWidth - iconText.width) / 2;
+      iconText.y = 6;
+      itemContainer.addChild(iconText);
+
+      // Item name (truncated if too long)
+      const itemText = new PIXI.Text({
+        text: item.itemDefinition.name.length > 12 
+          ? item.itemDefinition.name.substring(0, 10) + "..." 
+          : item.itemDefinition.name,
+        style: {
+          fontSize: Math.max(8, Math.min(10, itemWidth / 6)),
           fill: isSelected ? 0x00ff9f : 0xffffff,
           wordWrap: true,
           wordWrapWidth: itemWidth - 8,
@@ -197,7 +237,7 @@ export function PixiGridContainer({ container, cellSize = 40 }: PixiGridContaine
         },
       });
       itemText.x = 4;
-      itemText.y = 4;
+      itemText.y = itemHeight - itemText.height - 4;
       itemContainer.addChild(itemText);
 
       // Quantity badge
@@ -284,17 +324,45 @@ export function PixiGridContainer({ container, cellSize = 40 }: PixiGridContaine
       dragBg.fill({ color: canPlace ? 0x00ff9f : 0xdc2626, alpha: 0.2 });
       dragContainer.addChild(dragBg);
 
-      const dragText = new PIXI.Text({
-        text: draggingItem.item.itemDefinition.name,
+      // Drag icon
+      const getItemIcon = (category?: string): string => {
+        switch (category) {
+          case "Weapon": return "🔫";
+          case "Armor": return "🛡️";
+          case "Medical": return "💉";
+          case "Ammunition": return "📦";
+          case "Tool": return "🔧";
+          case "Container": return "🎒";
+          case "Electronics": return "📱";
+          case "Food": return "🍖";
+          default: return "📦";
+        }
+      };
+
+      const dragIcon = new PIXI.Text({
+        text: getItemIcon(draggingItem.item.itemDefinition.category),
         style: {
-          fontSize: 11,
+          fontSize: Math.min(itemWidth, itemHeight) * 0.4,
+          fill: 0xffffff,
+        },
+      });
+      dragIcon.x = (itemWidth - dragIcon.width) / 2;
+      dragIcon.y = 6;
+      dragContainer.addChild(dragIcon);
+
+      const dragText = new PIXI.Text({
+        text: draggingItem.item.itemDefinition.name.length > 12 
+          ? draggingItem.item.itemDefinition.name.substring(0, 10) + "..." 
+          : draggingItem.item.itemDefinition.name,
+        style: {
+          fontSize: Math.max(8, Math.min(10, itemWidth / 6)),
           fill: 0xffffff,
           wordWrap: true,
           wordWrapWidth: itemWidth - 8,
         },
       });
       dragText.x = 4;
-      dragText.y = 4;
+      dragText.y = itemHeight - dragText.height - 4;
       dragContainer.addChild(dragText);
 
       pixiContainer.addChild(dragContainer);

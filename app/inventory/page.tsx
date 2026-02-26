@@ -78,24 +78,41 @@ export default function InventoryPage() {
 
         {/* Center - Inventory Grids */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Container Tabs */}
-          <div className="flex gap-2 mb-4">
+          {/* Container Tabs - Sleek with grid size badges */}
+          <div className="flex gap-2 mb-4 border-b border-gray-800">
             {CONTAINER_TABS.map((tab) => {
-              const hasContainer = character.containers.some(
+              const container = character.containers.find(
                 (c) => c.containerType === tab.type
               );
+              const isActive = activeTab === tab.id;
+              
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`glass-panel px-4 py-2 rounded-sm text-sm font-semibold transition-all ${
-                    activeTab === tab.id
-                      ? "neon-border text-[#00ff9f]"
+                  className={`relative px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+                    isActive
+                      ? "text-[#00ff9f]"
                       : "text-gray-400 hover:text-white"
-                  } ${!hasContainer ? "opacity-50" : ""}`}
-                  disabled={!hasContainer}
+                  } ${!container ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  disabled={!container}
                 >
-                  {tab.label}
+                  <div className="flex items-center gap-2">
+                    <span>{tab.label}</span>
+                    {container && (
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                        isActive 
+                          ? "bg-[#00ff9f]/20 text-[#00ff9f]" 
+                          : "bg-gray-800/50 text-gray-500"
+                      }`}>
+                        {container.gridWidth}×{container.gridHeight}
+                      </span>
+                    )}
+                  </div>
+                  {/* Active underline */}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00ff9f] shadow-[0_0_8px_rgba(0,255,159,0.6)]" />
+                  )}
                 </button>
               );
             })}
